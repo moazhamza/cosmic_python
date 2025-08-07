@@ -3,4 +3,19 @@ name = "cosmic-python"
 version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pydantic>=2.11.7",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.1",
+    "ruff>=0.12.7",
+]
+lint = [
+    "kensho-lint>=10.0.0",
+]
+
+[[tool.uv.index]]
+url = "https://pypi.infra.kensho.com/simple"
+default = true
