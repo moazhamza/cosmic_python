@@ -1,10 +1,10 @@
 from typing import List
 
-from allocation.exceptions import OutOfStock
-from allocation.model import Batch, OrderLine
+from src.allocation.exceptions import OutOfStock
+from src.allocation.model import Batch, OrderLine
 
 
-def allocate(order_line: OrderLine, batches: List[Batch]) -> str:
+def allocate(order_line: OrderLine, batches: List[Batch]) -> str | None:
     """Allocates an order line to one of the batches in batches"""
     try:
         batch = next(b for b in sorted(batches) if b.can_allocate(order_line))

@@ -4,12 +4,20 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.116.1",
+    "mypy>=1.11",
     "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "sqlalchemy[asyncio]>=2.0.43",
+    "sqlmodel>=0.0.24",
+    "structlog>=25.4.0",
 ]
 
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "pytest>=8.4.1",
+    "pytest-randomly>=3.16.0",
     "ruff>=0.12.7",
 ]
 lint = [

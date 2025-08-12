@@ -1,16 +1,20 @@
-# This is a sample Python script.
+from contextlib import asynccontextmanager
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+from fastapi import FastAPI
 
-
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+from allocation.router import router as allocation_router
+from src.repository.dependencies import create_db_and_tables, drop_tables
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+app = FastAPI()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+
+@asynccontextmanager
+async def lifecycle(_: FastAPI):
+    """Lifecycle"""
+    create_db_and_tables()
+    yield
+    drop_tables()
+
+
+app.include_router(router=allocation_router)

@@ -2,9 +2,9 @@ import datetime
 from datetime import timedelta
 from unittest import TestCase
 
-from allocation.allocate import allocate
-from allocation.exceptions import OutOfStock
-from allocation.model import Batch, OrderLine
+from src.allocation.exceptions import OutOfStock
+from src.allocation.model import Batch, OrderLine
+from src.allocation.service import allocate
 
 
 class TestAllocate(TestCase):
@@ -19,7 +19,7 @@ class TestAllocate(TestCase):
             eta=datetime.date.today() + timedelta(days=1),
         )
 
-        line = OrderLine(reference="oref", sku="RETRO-CLOCK", quantity=10)
+        line = OrderLine(order_id="oref", sku="RETRO-CLOCK", quantity=10)
 
         allocate(line, [in_stock_batch, shipment_batch])
 
@@ -45,7 +45,7 @@ class TestAllocate(TestCase):
             purchased_quantity=100,
             eta=datetime.date.today() + timedelta(days=10),
         )
-        line = OrderLine(reference="order1", sku="MINIMALIST-SPOON", quantity=10)
+        line = OrderLine(order_id="order1", sku="MINIMALIST-SPOON", quantity=10)
 
         allocate(line, [medium, earliest, latest])
 
@@ -63,7 +63,7 @@ class TestAllocate(TestCase):
             purchased_quantity=100,
             eta=datetime.date.today() + timedelta(days=1),
         )
-        line = OrderLine(reference="oref", sku="HIGHBROW-POSTER", quantity=10)
+        line = OrderLine(order_id="oref", sku="HIGHBROW-POSTER", quantity=10)
         allocation = allocate(line, [in_stock_batch, shipment_batch])
         assert allocation == in_stock_batch.reference
 
@@ -71,8 +71,8 @@ class TestAllocate(TestCase):
         batch = Batch(
             reference="ref1", sku="small-fork", purchased_quantity=10, eta=datetime.date.today()
         )
-        line1 = OrderLine(reference="order1", sku="small-fork", quantity=10)
-        line2 = OrderLine(reference="order2", sku="small-fork", quantity=10)
+        line1 = OrderLine(order_id="order1", sku="small-fork", quantity=10)
+        line2 = OrderLine(order_id="order2", sku="small-fork", quantity=10)
 
         allocate(line1, [batch])
 
