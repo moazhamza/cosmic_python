@@ -1,12 +1,14 @@
 import datetime
-from typing import List, Self, Set
+from typing import List, Self
 
 from sqlmodel import Field, Relationship, SQLModel
 
+from src.allocation.exceptions import OutOfStock
 
-class Allocations(SQLModel, table=True):
-    batch_id: str = Field(foreign_key="batch.reference", primary_key=True)
-    orderline_id: str = Field(foreign_key="orderline.id", primary_key=True)
+
+class Allocation(SQLModel, table=True):
+    batch_id: int = Field(default=None, foreign_key="batch.id", primary_key=True)
+    orderline_id: int = Field(default=None, foreign_key="orderline.id", primary_key=True)
 
 
 class OrderLine(SQLModel, table=True):
@@ -14,9 +16,8 @@ class OrderLine(SQLModel, table=True):
     sku: str
     quantity: int
 
-    batch_id: str | None = Field(default=None, foreign_key="batch.reference")
-    batch: "Batch" = Relationship(back_populates="allocations", link_model=Allocations)
-
+    batch_id: int | None = Field(default=None, foreign_key="batch.id")
+    batch: "Batch" = Relationship(back_populates="allocations", link_model=Allocation)
     order_id: str | None
 
     def __hash__(self):
@@ -24,21 +25,23 @@ class OrderLine(SQLModel, table=True):
 
 
 class Batch(SQLModel, table=True):
-    reference: str | None = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+    reference: str
     sku: str
     purchased_quantity: int
 
     eta: datetime.date | None
 
-    allocations: List[OrderLine] = Relationship(back_populates="batch", link_model=Allocations)
-    _allocations: Set[OrderLine] = set()
+    allocations: List[OrderLine] = Relationship(
+        back_populates="batch",
+        sa_relationship_kwargs={"collection_class": set},
+        link_model=Allocation,
+    )
 
     def allocate(self, order_line: OrderLine) -> None:
         """Allocate an order_line from the batch"""
         if self.can_allocate(order_line):
-            self._allocations.add(order_line)
-
-        self.allocations = list(self._allocations)
+            self.allocations.add(order_line)
 
     def deallocate(self, order_line: OrderLine) -> None:
         """Remove order_line allocation from this batch
@@ -50,7 +53,7 @@ class Batch(SQLModel, table=True):
             stock allocated
         """
         if order_line in self.allocations:
-            self._allocations.remove(order_line)
+            self.allocations.remove(order_line)
 
     @property
     def allocated_quantity(self) -> int:
@@ -59,7 +62,7 @@ class Batch(SQLModel, table=True):
         Returns:
 
         """
-        return sum(line.quantity for line in self._allocations)
+        return sum(line.quantity for line in self.allocations)
 
     @property
     def available_quantity(self) -> int:
@@ -84,3 +87,12 @@ class Batch(SQLModel, table=True):
             return True
 
         return self.eta > other.eta
+
+
+def allocate(line: OrderLine, batches: List[Batch]) -> str:
+    try:
+        batch = next(b for b in sorted(batches) if b.can_allocate(line))
+        batch.allocate(line)
+        return batch.reference
+    except StopIteration:
+        raise OutOfStock(f"Out of stock for sku {line.sku}")

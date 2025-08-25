@@ -1,7 +1,7 @@
 import abc
 from typing import List
 
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 from src.allocation.model import Batch
 
@@ -28,6 +28,11 @@ class AbstractRepository(abc.ABC):
         """
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def list(self) -> List[Batch]:
+        """lists all batch objects in repository"""
+        raise NotImplementedError
+
 
 class SqlAlchemyRepository(AbstractRepository):
     def __init__(self, session: Session) -> None:
@@ -47,7 +52,7 @@ class SqlAlchemyRepository(AbstractRepository):
         Returns:
 
         """
-        return self.session.query(Batch).filter_by(reference=reference).one()
+        return self.session.exec(select(Batch).where(Batch.reference == reference)).one()
 
     def add(self, batch_obj: Batch) -> None:
         """Adds a batch object to a sqlalchemy backed repository
@@ -66,4 +71,4 @@ class SqlAlchemyRepository(AbstractRepository):
         Returns:
 
         """
-        return self.session.query(Batch).all()
+        return list(self.session.exec(select(Batch)).all())

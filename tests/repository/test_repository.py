@@ -49,7 +49,7 @@ class TestRepository(TestCase):
     def insert_allocation(self, orderline_id, batch_id):
         self.session.execute(
             text(
-                "INSERT INTO allocations (orderline_id, batch_id) VALUES (:orderline_id, :batch_id)"
+                "INSERT INTO allocation (orderline_id, batch_id) VALUES (:orderline_id, :batch_id)"
             ),
             dict(orderline_id=orderline_id, batch_id=batch_id),
         )
@@ -62,7 +62,7 @@ class TestRepository(TestCase):
         repo.add(batch)
         self.session.commit()
         rows = self.session.exec(
-            text('SELECT reference, sku, purchased_quantity, eta FROM "batch"')
+            text('SELECT  reference, sku, purchased_quantity, eta FROM "batch"')
         )
 
         self.assertListEqual([("batch-1", "RUSTY-SOAPDISH", 100, None)], list(rows))

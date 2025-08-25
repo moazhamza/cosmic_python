@@ -66,8 +66,8 @@ class TestORM(TestCase):
         ]
 
         self.assertListEqual(
-            [x.model_dump() for x in expected],
-            [x.model_dump() for x in list(self.session.exec(select(Batch)).all())],
+            [x.model_dump(exclude={"id"}) for x in expected],
+            [x.model_dump(exclude={"id"}) for x in list(self.session.exec(select(Batch)).all())],
         )
 
     def test_saving_batches(self):
@@ -81,9 +81,37 @@ class TestORM(TestCase):
 
     def test_saving_allocations(self):
         batch = Batch(reference="batch1", sku="sku1", purchased_quantity=100, eta=None)
-        line = OrderLine(id="order1", sku="sku1", quantity=10)
+        line = OrderLine(order_id="order-001", sku="sku1", quantity=10)
         batch.allocate(line)
         self.session.add(batch)
         self.session.commit()
-        rows = list(self.session.exec(text('SELECT orderline_id, batch_id FROM "allocations"')))
-        assert rows == [(line.id, batch.reference)]
+        rows = list(self.session.exec(text('SELECT orderline_id, batch_id FROM "allocation"')))
+        assert rows == [(batch.id, line.id)]
+
+    def test_retrieving_allocations(self):
+        session = self.session
+        session.execute(
+            text('INSERT INTO orderline (order_id, sku, quantity) VALUES ("order1", "sku1", 12)')
+        )
+        [[olid]] = session.execute(
+            text("SELECT id FROM orderline WHERE order_id=:order_id AND sku=:sku"),
+            dict(order_id="order1", sku="sku1"),
+        )
+        session.execute(
+            text(
+                "INSERT INTO batch (reference, sku, purchased_quantity, eta)"
+                ' VALUES ("batch1", "sku1", 100, null)'
+            )
+        )
+        [[bid]] = session.execute(
+            text("SELECT id FROM batch WHERE reference=:ref AND sku=:sku"),
+            dict(ref="batch1", sku="sku1"),
+        )
+        session.execute(
+            text("INSERT INTO allocation (orderline_id, batch_id) VALUES (:olid, :bid)"),
+            dict(olid=olid, bid=bid),
+        )
+
+        batch = session.query(Batch).one()
+
+        assert batch.allocations == {OrderLine(id=1, order_id="order1", sku="sku1", quantity=12)}

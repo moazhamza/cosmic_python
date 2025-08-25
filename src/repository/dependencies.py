@@ -1,7 +1,8 @@
 from typing import Any, Generator
 
-from config.settings import settings
 from sqlmodel import Session, SQLModel, create_engine
+
+from src.config.settings import settings
 
 
 sqlite_file_name = "database.db"

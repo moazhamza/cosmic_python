@@ -8,6 +8,7 @@ dependencies = [
     "mypy>=1.11",
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
+    "requests>=2.32.5",
     "sqlalchemy[asyncio]>=2.0.43",
     "sqlmodel>=0.0.24",
     "structlog>=25.4.0",
